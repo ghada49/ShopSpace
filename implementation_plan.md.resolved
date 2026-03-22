@@ -1,0 +1,139 @@
+# ShopSpace MVP Implementation Plan
+
+This document outlines the MVP architecture and technical plan for **ShopSpace**, a marketplace connecting brands with physical retail spaces.
+
+## 1. Folder Structure
+
+The project will use a standard monorepo structure separating frontend and backend.
+
+```text
+shopspace/
+├── frontend/                 # React + Tailwind application
+│   ├── public/               # Static assets
+│   ├── src/
+│   │   ├── assets/           # Images, icons
+│   │   ├── components/       # Reusable UI components (Navbar, Card, Button, Input)
+│   │   ├── pages/            # Page components (Home, Login, Dashboard, ListingDetails)
+│   │   ├── context/          # React Context (AuthContext)
+│   │   ├── services/         # API call wrappers (api.js)
+│   │   ├── utils/            # Helper functions
+│   │   ├── App.jsx           # Main application routing
+│   │   └── index.css         # Tailwind directives and global styles
+│   ├── package.json
+│   └── tailwind.config.js
+│
+└── backend/                  # Node.js + Express application
+    ├── src/
+    │   ├── config/           # DB configuration, environment variables
+    │   ├── controllers/      # Request handlers (auth, listings, bookings)
+    │   ├── middlewares/      # JWT verification, Role-based access control (RBAC)
+    │   ├── models/           # SQLite database queries/schemas
+    │   ├── routes/           # Express route definitions
+    │   └── server.js         # Entry point
+    ├── database.sqlite       # SQLite database file
+    └── package.json
+```
+
+---
+
+## 2. Database Schema (SQLite)
+
+The database will consist of three core tables to support hosts, brands, listings, and bookings.
+
+**`users`**
+- `id` (INTEGER, Primary Key)
+- `name` (TEXT)
+- `email` (TEXT, Unique)
+- `password_hash` (TEXT)
+- `role` (TEXT) - Enum: `'host'`, `'brand'`
+- `created_at` (DATETIME)
+
+**`listings`**
+- `id` (INTEGER, Primary Key)
+- `host_id` (INTEGER, Foreign Key -> users.id)
+- `title` (TEXT)
+- `description` (TEXT)
+- `category` (TEXT) - Used for smart matching logic
+- `size` (TEXT) - Space dimensions or capacity (optional)
+- `price_per_day` (REAL)
+- `location` (TEXT)
+- `image_url` (TEXT) - *(Optional, can be a placeholder for MVP)*
+- `match_score` (REAL) - For smart matching insights
+- `foot_traffic` (INTEGER) - Daily/weekly metric
+- `exposure_score` (REAL) - Badge/ranking signal
+- `verified` (BOOLEAN) - Trust signal for UI badges
+- `created_at` (DATETIME)
+
+**`bookings`**
+- `id` (INTEGER, Primary Key)
+- `listing_id` (INTEGER, Foreign Key -> listings.id)
+- `brand_id` (INTEGER, Foreign Key -> users.id)
+- `start_date` (DATETIME)
+- `end_date` (DATETIME)
+- `status` (TEXT) - Enum: `'pending'`, `'approved'`, `'rejected'`
+- `total_price` (REAL)
+- `created_at` (DATETIME)
+
+---
+
+## 3. Main Components & Pages (Frontend)
+
+### Pages
+- **`Home`**: Landing page showcasing featured listings (public).
+- **`Login / Signup`**: Authentication pages with an option to select user role (`host` or `brand`).
+- **`BrowseListings`**: Search/filter page for brands to discover available spaces.
+- **`ListingDetails`**: Detailed view of a specific space with a "Request Booking" form.
+- **`HostDashboard`**: Private page for hosts to create listings and manage booking requests (Approve/Reject).
+- **`BrandDashboard`**: Private page for brands to track their booking status.
+
+### Core Components
+- **`Navbar`**: Responsive navigation containing login/logout buttons and dashboard links based on auth state.
+- **`ListingCard`**: Reusable component displaying a summary of a space (image, title, location, price).
+- **`BookingForm`**: Date picker and submission form for brands.
+- **`ProtectedRoute`**: Wrapper component to restrict access to authenticated users based on roles.
+
+---
+
+## 4. API Endpoints (Backend)
+
+All endpoints prefixed with `/api`.
+
+### Authentication
+- `POST /auth/register`: Create a new user (Host or Brand). Returns JWT.
+- `POST /auth/login`: Authenticate user and return JWT.
+- `GET /auth/me`: Get current user details based on JWT.
+
+### Listings
+- `GET /listings`: Fetch all listings (public).
+- `GET /listings/:id`: Fetch a specific listing details (public).
+- `POST /listings`: Create a new listing. *(Requires JWT, Role: Host)*
+- `GET /listings/host/me`: Get all listings created by the logged-in host. *(Requires JWT, Role: Host)*
+
+### Bookings
+- `POST /bookings`: Submit a new booking request for a listing. *(Requires JWT, Role: Brand)*
+- `GET /bookings/brand/me`: Get all bookings made by the logged-in brand. *(Requires JWT, Role: Brand)*
+- `GET /bookings/host/me`: Get all booking requests received by the logged-in host's listings. *(Requires JWT, Role: Host)*
+- `PATCH /bookings/:id/status`: Update booking status (`approved` or `rejected`). *(Requires JWT, Role: Host)*
+
+---
+
+## 5. Data Flow (Frontend ↔ Backend)
+
+To illustrate how the system connects, here is the data flow for the core **Booking Request** action:
+
+1. **Authentication (Brand):**
+   - Brand logs in. Frontend sends credentials to `POST /api/auth/login`.
+   - Backend verifies and returns a JWT token.
+   - Frontend stores the JWT in `localStorage` and updates global state using `AuthContext`.
+
+2. **Browsing & Requesting:**
+   - Brand visits a listing page. Frontend fetches data via `GET /api/listings/:id`.
+   - Brand selects dates and clicks "Request Booking".
+   - Frontend attaches JWT in the `Authorization: Bearer <token>` header and sends `POST /api/bookings` with `listing_id`, `start_date`, and `end_date`.
+   - Backend validates the token via middleware, extracts the `brand_id` from the token, saves the booking as `'pending'`, and returns a success response.
+
+3. **Host Approval:**
+   - Host logs in and visits `HostDashboard`.
+   - Frontend fetches pending requests via `GET /api/bookings/host/me` (sending Host's JWT).
+   - Host clicks "Approve". Frontend sends `PATCH /api/bookings/:id/status` with `{ "status": "approved" }`.
+   - Backend updates the database and responds. The UI instantly reflects the approved status.

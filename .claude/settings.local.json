@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx react-scripts:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(node:*)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}
