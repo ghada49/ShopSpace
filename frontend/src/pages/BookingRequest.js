@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BookingForm from '../components/BookingForm';
 import { listingsAPI, bookingsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function BookingRequest() {
   const navigate = useNavigate();
@@ -13,6 +14,19 @@ export default function BookingRequest() {
 
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (user.role !== 'brand') {
+      navigate('/host-dashboard');
+      return;
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     listingsAPI.getById(id)
