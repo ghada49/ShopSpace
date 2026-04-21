@@ -241,10 +241,10 @@ export default function ListingDetails() {
               </div>
             </div>
             <button
-              onClick={() => navigate(`/listings/${id}/book`)}
+              onClick={() => user ? navigate(`/listings/${id}/book`) : navigate('/login')}
               className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/30"
             >
-              Request Booking
+              {user ? 'Request Booking' : 'Log In to Book'}
             </button>
             <p className="text-center text-[11px] text-slate-400">
               * You won't be charged yet. The host has 48 hours to accept or decline your request. 
