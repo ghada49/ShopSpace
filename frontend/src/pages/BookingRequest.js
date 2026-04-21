@@ -33,12 +33,11 @@ export default function BookingRequest() {
   }
 
   // Compute price breakdown from listing
-  const days = 4;
+  const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
   const dailyRate = listing?.price_per_day || 0;
   const subtotal = dailyRate * days;
-  const platformFee = Math.round(subtotal * 0.08);
-  const securityDeposit = 500;
-  const total = subtotal + platformFee + securityDeposit;
+  const platformCommission = Math.round(subtotal * 0.10);
+  const total = subtotal + platformCommission;
 
   return (
     <div className="min-h-screen bg-background-light">
@@ -86,13 +85,9 @@ export default function BookingRequest() {
                   <span className="text-slate-500">Daily Rate (${dailyRate} x {days})</span>
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">ShopSpace Platform Fee (8%)</span>
-                  <span className="font-medium">${platformFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Security Deposit (Refundable)</span>
-                  <span className="font-medium">${securityDeposit.toFixed(2)}</span>
+                <div className = "flex justify-between items-center text-sm">
+                  <span className = "text-slate-500">ShopSpace commission (10%)</span>
+                  <span className = "font-medium">${platformCommission.toFixed(2)}</span>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                   <span className="font-bold text-lg">Total</span>
