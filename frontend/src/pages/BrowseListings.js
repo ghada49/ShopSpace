@@ -73,7 +73,7 @@ export default function BrowseListings() {
             </button>
             <div
               className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/25 cursor-pointer hover:bg-primary/25 transition-colors"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(user ? (user.role === 'host' ? '/host-dashboard' : '/brand-dashboard') : '/login')}
             >
               <span className="material-symbols-outlined text-primary text-[18px]">person</span>
             </div>
