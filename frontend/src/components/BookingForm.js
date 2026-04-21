@@ -16,9 +16,8 @@ export default function BookingForm({ listing, onSubmitBooking, submitting }) {
   const dailyRate = listing?.price_per_day || listing?.pricePerDay || 1200;
   const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
   const subtotal = dailyRate * days;
-  const cleaningFee = 150;
-  const serviceFee = Math.round(subtotal * 0.028);
-  const total = subtotal + cleaningFee + serviceFee;
+  const platformCommission = Math.round(subtotal * 0.1); 
+  const total = subtotal + platformCommission 
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -175,13 +174,9 @@ export default function BookingForm({ listing, onSubmitBooking, submitting }) {
             <span className="text-slate-500">Daily Rate (${dailyRate} x {days})</span>
             <span className="font-medium">${subtotal.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-slate-500">Cleaning fee</span>
-            <span className="font-medium">${cleaningFee}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-slate-500">ShopSpace service fee</span>
-            <span className="font-medium">${serviceFee}</span>
+          <div className = "flex justify-between items-center text-sm">
+            <span className = "text-slate-500">ShopSpace commission (10%)</span>
+            <span className = "font-medium">${platformCommission}</span>
           </div>
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
             <span className="font-bold text-lg">Total</span>

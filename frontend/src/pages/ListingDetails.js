@@ -35,9 +35,8 @@ export default function ListingDetails() {
   }
 
   const subtotal = listing.price_per_day * days;
-  const cleaningFee = 150;
-  const serviceFee = Math.round(subtotal * 0.02);
-  const total = subtotal + cleaningFee + serviceFee;
+  const platformCommission = Math.round(subtotal * 0.10);
+  const total = subtotal + platformCommission;
 
   const matchScore = listing.match_score;
   const isTourist = ['zaitunay', 'byblos'].some(k => listing.location?.toLowerCase().includes(k));
@@ -233,12 +232,8 @@ export default function ListingDetails() {
                 <span className="font-medium">${subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Cleaning fee</span>
-                <span className="font-medium">${cleaningFee}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">ShopSpace service fee</span>
-                <span className="font-medium">${serviceFee}</span>
+                <span className="text-slate-600">ShopSpace commission (10%)</span>
+                <span className="font-medium">${platformCommission}</span>
               </div>
               <div className="pt-3 border-t border-slate-100 flex justify-between">
                 <span className="font-bold">Total</span>
@@ -252,7 +247,7 @@ export default function ListingDetails() {
               Request Booking
             </button>
             <p className="text-center text-[11px] text-slate-400">
-              * A small platform fee applies to secure your insurance. You won't be charged yet.
+              * You won't be charged yet. The host has 48 hours to accept or decline your request. 
             </p>
           </div>
         </aside>
