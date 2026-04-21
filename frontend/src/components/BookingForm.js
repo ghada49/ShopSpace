@@ -5,9 +5,7 @@ const CATEGORIES = ['Apparel', 'Home Decor', 'Beauty', 'Art'];
 const today = new Date().toISOString().split('T')[0];
 const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
 
-export default function BookingForm({ listing, onSubmitBooking, submitting }) {
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(nextWeek);
+export default function BookingForm({ listing, onSubmitBooking, submitting, startDate, setStartDate, endDate, setEndDate }) {
   const [brandName, setBrandName] = useState('');
   const [website, setWebsite] = useState('');
   const [description, setDescription] = useState('');

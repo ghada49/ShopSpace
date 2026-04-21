@@ -11,6 +11,9 @@ export default function BookingRequest() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+
   useEffect(() => {
     listingsAPI.getById(id)
       .then(res => setListing(res.data))
@@ -71,7 +74,15 @@ export default function BookingRequest() {
           {loading ? (
             <div className="flex items-center justify-center py-20 text-slate-400">Loading listing...</div>
           ) : (
-            <BookingForm listing={listing} onSubmitBooking={handleSubmitBooking} submitting={submitting} />
+            <BookingForm
+              listing={listing}
+              onSubmitBooking={handleSubmitBooking}
+              submitting={submitting}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+            />
           )}
         </div>
 
