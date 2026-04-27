@@ -3,7 +3,12 @@ import { useState } from 'react';
 const CATEGORIES = ['Apparel', 'Home Decor', 'Beauty', 'Art'];
 
 const today = new Date().toISOString().split('T')[0];
-const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
+function getBillingUnits(days, priceUnit) {
+  if (priceUnit === 'week') return Math.ceil(days / 7);
+  if (priceUnit === 'month') return Math.ceil(days / 30);
+  return days;
+}
 
 export default function BookingForm({ listing, onSubmitBooking, submitting, startDate, setStartDate, endDate, setEndDate }) {
   const [brandName, setBrandName] = useState('');
@@ -13,7 +18,9 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
 
   const dailyRate = listing?.price_per_day || listing?.pricePerDay || 1200;
   const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
-  const subtotal = dailyRate * days;
+  const priceUnit = listing?.price_unit || 'day';
+  const billingUnits = getBillingUnits(days, priceUnit);
+  const subtotal = dailyRate * billingUnits;
   const platformCommission = Math.round(subtotal * 0.1); 
   const total = subtotal + platformCommission 
 
@@ -39,7 +46,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
           <span className="material-symbols-outlined text-primary">storefront</span>
           Listing Summary
         </h2>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-primary/5 flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-primary/10 flex flex-col md:flex-row gap-4">
           <div className="w-full md:w-40 aspect-video md:aspect-square bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden shrink-0">
             <img
               className="w-full h-full object-cover"
@@ -51,7 +58,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
             <div>
               <p className="text-xs font-medium text-primary uppercase tracking-wider">ID: SS-{listing?.id || '0000'}</p>
               <h3 className="text-lg font-bold mt-1">{listing?.title || 'Retail Space'}</h3>
-              <div className="flex items-center text-slate-500 dark:text-slate-400 text-sm mt-1">
+              <div className="flex items-center text-slate-500 text-sm mt-1">
                 <span className="material-symbols-outlined text-sm mr-1">location_on</span>
                 {listing?.address || listing?.location || 'Lebanon'}
               </div>
@@ -70,7 +77,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
           <span className="material-symbols-outlined text-primary">calendar_month</span>
           Select Dates
         </h2>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-primary/5">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-primary/10">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase text-slate-400 mb-1.5">Check In</p>
@@ -95,7 +102,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
               />
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="mt-4 flex items-center justify-between pt-4 border-t border-primary/10">
             <div className="text-sm"><span className="text-slate-500">Selected:</span> <span className="font-bold">{startDate} → {endDate}</span></div>
             <div className="text-sm"><span className="text-slate-500">Duration:</span> <span className="font-bold">{days} Day{days !== 1 ? 's' : ''}</span></div>
           </div>
@@ -108,7 +115,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
           <span className="material-symbols-outlined text-primary">badge</span>
           Brand Details
         </h2>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-primary/5 space-y-4">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-primary/10 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold">Brand Name</label>
@@ -116,7 +123,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
                 type="text"
                 value={brandName}
                 onChange={e => setBrandName(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary py-2.5 px-4"
+                className="w-full bg-primary/5 border border-primary/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary py-2.5 px-4 text-slate-900 placeholder:text-slate-400"
                 placeholder="e.g. Minimalist Home"
                 required
               />
@@ -127,7 +134,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
                 type="text"
                 value={website}
                 onChange={e => setWebsite(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary py-2.5 px-4"
+                className="w-full bg-primary/5 border border-primary/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary py-2.5 px-4 text-slate-900 placeholder:text-slate-400"
                 placeholder="https://..."
               />
             </div>
@@ -137,7 +144,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary py-2.5 px-4 resize-none"
+              className="w-full bg-primary/5 border border-primary/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary py-2.5 px-4 resize-none text-slate-900 placeholder:text-slate-400"
               placeholder="Describe your products and vision for the pop-up..."
               rows={3}
             />
@@ -153,7 +160,7 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
                   className={`px-4 py-2 rounded-full border text-sm transition-colors
                     ${selectedCategory === cat
                       ? 'border-primary text-primary font-medium bg-primary/5'
-                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary/50'
+                      : 'border-primary/20 text-slate-600 hover:border-primary/50 bg-white'
                     }`}
                 >
                   {cat}
@@ -165,18 +172,18 @@ export default function BookingForm({ listing, onSubmitBooking, submitting, star
       </section>
 
       {/* Price Breakdown (mobile only — desktop sidebar handles this) */}
-      <div className="lg:hidden bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg border border-primary/10">
+      <div className="lg:hidden bg-white rounded-xl p-6 shadow-lg border border-primary/10">
         <h3 className="text-lg font-bold mb-6">Price Breakdown</h3>
         <div className="space-y-4 mb-6">
           <div className="flex justify-between items-center text-sm">
-            <span className="text-slate-500">Daily Rate (${dailyRate} x {days})</span>
+            <span className="text-slate-500">Rate (${dailyRate} x {billingUnits} {priceUnit}{billingUnits !== 1 ? 's' : ''})</span>
             <span className="font-medium">${subtotal.toLocaleString()}</span>
           </div>
           <div className = "flex justify-between items-center text-sm">
-            <span className = "text-slate-500">ShopSpace commission (10%)</span>
+            <span className = "text-slate-500">BaynSpace commission (10%)</span>
             <span className = "font-medium">${platformCommission}</span>
           </div>
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <div className="pt-4 border-t border-primary/10 flex justify-between items-center">
             <span className="font-bold text-lg">Total</span>
             <span className="font-bold text-2xl text-primary">${total.toLocaleString()}</span>
           </div>

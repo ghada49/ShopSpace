@@ -18,7 +18,7 @@ export default function Navbar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/25">
             <span className="material-symbols-outlined text-sm">storefront</span>
           </div>
-          <span className="text-xl font-black tracking-tight text-slate-900">ShopSpace</span>
+          <span className="text-xl font-black tracking-tight text-slate-900">BaynSpace</span>
         </Link>
 
         <div className="hidden space-x-1 md:flex">

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getListings, getListingById, createListing, getHostListings } = require('../controllers/listingController');
+const { getListings, getListingById, createListing, updateListing, getHostListings } = require('../controllers/listingController');
 const { protect, restrictTo, optionalAuth } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.get('/host/me', protect, restrictTo('host'), getHostListings);
 router.get('/:id', optionalAuth, getListingById);
 
 router.post('/', protect, restrictTo('host'), createListing);
+router.patch('/:id', protect, restrictTo('host'), updateListing);
 
 module.exports = router;

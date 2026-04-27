@@ -10,6 +10,21 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+function ensureColumn(table, column, definition) {
+  db.all(`PRAGMA table_info(${table})`, (err, columns) => {
+    if (err) {
+      console.error(`Error checking ${table}.${column}:`, err.message);
+      return;
+    }
+
+    if (!columns.some(existingColumn => existingColumn.name === column)) {
+      db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`, alterErr => {
+        if (alterErr) console.error(`Error adding ${table}.${column}:`, alterErr.message);
+      });
+    }
+  });
+}
+
 // Setup tables
 db.serialize(() => {
   db.run(`
@@ -58,6 +73,15 @@ db.serialize(() => {
       FOREIGN KEY (brand_id) REFERENCES users(id)
     )
   `);
+
+  ensureColumn('listings', 'price_unit', "TEXT DEFAULT 'day'");
+  ensureColumn('listings', 'area_value', 'REAL');
+  ensureColumn('listings', 'area_unit', "TEXT DEFAULT 'sq ft'");
+  ensureColumn('listings', 'traffic_unit', "TEXT DEFAULT 'day'");
+  ensureColumn('listings', 'exposure_unit', "TEXT DEFAULT '/10'");
+  ensureColumn('listings', 'location_url', 'TEXT');
+  ensureColumn('listings', 'region', 'TEXT');
+  ensureColumn('listings', 'shop_url', 'TEXT');
 });
 
 // Helper for Promises since sqlite3 uses callbacks

@@ -18,7 +18,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -27,7 +27,7 @@ app.use('/api/bookings', bookingRoutes);
 
 // Base route
 app.get('/', (req, res) => {
-    res.send('ShopSpace API is running');
+    res.send('BaynSpace API is running');
 });
 
 // Error fallback

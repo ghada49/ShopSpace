@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listingsAPI, bookingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import ListingCard from '../components/ListingCard';
+import { CATEGORIES, formatCategory } from '../constants/categories';
+import { LEBANON_REGIONS } from '../constants/regions';
 
 const NAV_ITEMS = [
-  { icon: 'dashboard', label: 'Dashboard', active: true },
-  { icon: 'search', label: 'Browse Spaces' },
-  { icon: 'calendar_today', label: 'My Bookings' },
-  { icon: 'chat_bubble', label: 'Messages' },
+  { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+  { id: 'browse', icon: 'search', label: 'Browse Spaces' },
+  { id: 'bookings', icon: 'calendar_today', label: 'My Bookings' },
 ];
 
 const STATUS_COLOR = {
@@ -20,8 +22,18 @@ export default function BrandDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [bookings, setBookings] = useState([]);
+  const [listings, setListings] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [browseSearch, setBrowseSearch] = useState('');
+  const [browseCategory, setBrowseCategory] = useState('all');
+  const [browseRegion, setBrowseRegion] = useState('all');
+  const [browseVerified, setBrowseVerified] = useState(false);
+  const [browseMinPrice, setBrowseMinPrice] = useState('');
+  const [browseMaxPrice, setBrowseMaxPrice] = useState('');
+  const [browseSortBy, setBrowseSortBy] = useState('default');
+  const [browseMinTraffic, setBrowseMinTraffic] = useState('');
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -36,16 +48,54 @@ export default function BrandDashboard() {
     ])
       .then(([bookRes, listRes]) => {
         setBookings(bookRes.data);
+        setListings(listRes.data);
         // Recommendations: top 3 by match_score (already sorted by backend)
         setRecommendations(listRes.data.slice(0, 3));
       })
       .catch(err => console.error('Dashboard load error:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
+
+  function handleNavClick(itemId) {
+    setActiveSection(itemId);
+  }
 
   const activeBookings = bookings.filter(b => b.status === 'approved').length;
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const topMatchScore = recommendations[0]?.match_score;
+  const filteredListings = (() => {
+    const query = browseSearch.toLowerCase();
+    let result = listings.filter(listing => {
+      const price = Number(listing.price_per_day || 0);
+      const matchesSearch = !query ||
+        listing.title?.toLowerCase().includes(query) ||
+        listing.location?.toLowerCase().includes(query) ||
+        listing.category?.toLowerCase().includes(query);
+      const matchesCategory = browseCategory === 'all' || listing.category === browseCategory;
+      const matchesRegion = browseRegion === 'all' || listing.region === browseRegion;
+      const matchesVerified = !browseVerified || listing.verified === 1 || listing.verified === true;
+      const matchesMinPrice = !browseMinPrice || price >= Number(browseMinPrice);
+      const matchesMaxPrice = !browseMaxPrice || price <= Number(browseMaxPrice);
+      const matchesTraffic = !browseMinTraffic || Number(listing.foot_traffic || 0) >= Number(browseMinTraffic);
+      return matchesSearch && matchesCategory && matchesRegion && matchesVerified && matchesMinPrice && matchesMaxPrice && matchesTraffic;
+    });
+    if (browseSortBy === 'price_asc') result = [...result].sort((a, b) => (a.price_per_day || 0) - (b.price_per_day || 0));
+    else if (browseSortBy === 'price_desc') result = [...result].sort((a, b) => (b.price_per_day || 0) - (a.price_per_day || 0));
+    else if (browseSortBy === 'traffic') result = [...result].sort((a, b) => (b.foot_traffic || 0) - (a.foot_traffic || 0));
+    else if (browseSortBy === 'match') result = [...result].sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+    return result;
+  })();
+
+  function resetBrowseFilters() {
+    setBrowseSearch('');
+    setBrowseCategory('all');
+    setBrowseRegion('all');
+    setBrowseVerified(false);
+    setBrowseMinPrice('');
+    setBrowseMaxPrice('');
+    setBrowseSortBy('default');
+    setBrowseMinTraffic('');
+  }
 
   const analytics = [
     { label: 'Active Bookings', value: String(activeBookings), badge: 'Approved', badgeColor: 'bg-emerald-100 text-emerald-700', sub: 'Across listings' },
@@ -62,20 +112,24 @@ export default function BrandDashboard() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">storefront</span>
             </div>
-            <span className="text-xl font-bold tracking-tight">ShopSpace</span>
+            <span className="text-xl font-bold tracking-tight">BaynSpace</span>
           </div>
         </div>
         <nav className="flex-1 px-4 space-y-1">
-          {NAV_ITEMS.map(({ icon, label, active }) => (
-            <a
+          {NAV_ITEMS.map(({ id, icon, label }) => {
+            const active = id === activeSection;
+            return (
+            <button
               key={label}
-              href={label === 'Browse Spaces' ? '/browse' : '#'}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
+              type="button"
+              onClick={() => handleNavClick(id)}
+              className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
             >
               <span className="material-symbols-outlined">{icon}</span>
               {label}
-            </a>
-          ))}
+            </button>
+            );
+          })}
         </nav>
         <div className="p-4 border-t border-slate-200">
           <div className="flex items-center gap-3 p-2">
@@ -96,13 +150,18 @@ export default function BrandDashboard() {
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold md:text-2xl">Brand Dashboard</h1>
+          <h1 className="text-xl font-bold md:text-2xl">
+            {activeSection === 'bookings' ? 'My Bookings' : activeSection === 'browse' ? 'Browse Spaces' : 'Brand Dashboard'}
+          </h1>
           <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors">
-              <span className="material-symbols-outlined">notifications</span>
+            <button
+              onClick={() => navigate('/')}
+              className="border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+            >
+              Home
             </button>
             <button
-              onClick={() => navigate('/browse')}
+              onClick={() => setActiveSection('browse')}
               className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               Browse Spaces
@@ -116,6 +175,7 @@ export default function BrandDashboard() {
           ) : (
             <>
               {/* Analytics */}
+              {activeSection === 'dashboard' && (
               <section>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {analytics.map(({ label, value, badge, badgeColor, sub }) => (
@@ -130,18 +190,30 @@ export default function BrandDashboard() {
                   ))}
                 </div>
               </section>
+              )}
 
               {/* Booking Status */}
+              {(activeSection === 'dashboard' || activeSection === 'bookings') && (
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold">Current Booking Status</h2>
-                  <a className="text-primary text-sm font-semibold hover:underline" href="#">View all</a>
+                  <h2 className="text-lg font-bold">
+                    {activeSection === 'bookings' ? 'All Booking Requests' : 'Current Booking Status'}
+                  </h2>
+                  {activeSection === 'dashboard' && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection('bookings')}
+                      className="text-primary text-sm font-semibold hover:underline"
+                    >
+                      View all
+                    </button>
+                  )}
                 </div>
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   {bookings.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
                       <span className="material-symbols-outlined text-3xl mb-2 block">calendar_today</span>
-                      No bookings yet. <button onClick={() => navigate('/browse')} className="text-primary font-semibold hover:underline">Browse spaces</button>
+                      No bookings yet. <button onClick={() => setActiveSection('browse')} className="text-primary font-semibold hover:underline">Browse spaces</button>
                     </div>
                   ) : (
                     <div className="flex flex-col divide-y divide-slate-100">
@@ -174,8 +246,10 @@ export default function BrandDashboard() {
                   )}
                 </div>
               </section>
+              )}
 
               {/* Recommended Spaces */}
+              {activeSection === 'dashboard' && (
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -186,7 +260,7 @@ export default function BrandDashboard() {
                       </span>
                     )}
                   </div>
-                  <button onClick={() => navigate('/browse')} className="text-slate-500 hover:text-primary transition-colors">
+                  <button onClick={() => setActiveSection('browse')} className="text-slate-500 hover:text-primary transition-colors">
                     <span className="material-symbols-outlined">tune</span>
                   </button>
                 </div>
@@ -234,6 +308,102 @@ export default function BrandDashboard() {
                   </div>
                 )}
               </section>
+              )}
+
+              {activeSection === 'browse' && (
+                <section className="flex flex-col lg:flex-row gap-6 -mx-6 -mt-2 px-0">
+                  {/* Filter Sidebar */}
+                  <aside className="lg:w-56 shrink-0 px-6 lg:px-0 lg:pl-6">
+                    <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4 sticky top-24">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
+                          <span className="material-symbols-outlined text-slate-400 text-sm">tune</span>
+                          Filters
+                        </h3>
+                        <button onClick={resetBrowseFilters} className="text-xs text-primary font-semibold hover:underline">Reset</button>
+                      </div>
+
+                      <div className="flex items-center rounded-xl bg-slate-50 border border-slate-200 h-9 px-3">
+                        <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                        <input
+                          value={browseSearch}
+                          onChange={e => setBrowseSearch(e.target.value)}
+                          className="w-full bg-transparent px-2 text-xs outline-none placeholder:text-slate-400"
+                          placeholder="Title, location..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Region</label>
+                        <select value={browseRegion} onChange={e => setBrowseRegion(e.target.value)} className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="all">Any region</option>
+                          {LEBANON_REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Category</label>
+                        <select value={browseCategory} onChange={e => setBrowseCategory(e.target.value)} className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="all">Any category</option>
+                          {CATEGORIES.map(c => <option key={c} value={c}>{formatCategory(c)}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Price Range</label>
+                        <div className="flex items-center gap-2">
+                          <input className="w-full text-xs rounded-xl border border-slate-200 py-2 px-3 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Min" type="number" min="0" value={browseMinPrice} onChange={e => setBrowseMinPrice(e.target.value)} />
+                          <span className="text-slate-300 font-bold">-</span>
+                          <input className="w-full text-xs rounded-xl border border-slate-200 py-2 px-3 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Max" type="number" min="0" value={browseMaxPrice} onChange={e => setBrowseMaxPrice(e.target.value)} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Sort By</label>
+                        <select value={browseSortBy} onChange={e => setBrowseSortBy(e.target.value)} className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="default">Best Match</option>
+                          <option value="price_asc">Price: Low to High</option>
+                          <option value="price_desc">Price: High to Low</option>
+                          <option value="traffic">Highest Foot Traffic</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Min Foot Traffic</label>
+                        <input className="w-full text-xs rounded-xl border border-slate-200 py-2 px-3 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="e.g. 100" type="number" min="0" value={browseMinTraffic} onChange={e => setBrowseMinTraffic(e.target.value)} />
+                      </div>
+
+                      <label className="flex items-center justify-between cursor-pointer border-t border-slate-100 pt-3">
+                        <span className="text-sm font-semibold text-slate-700">Verified Only</span>
+                        <input type="checkbox" checked={browseVerified} onChange={e => setBrowseVerified(e.target.checked)} className="accent-primary" />
+                      </label>
+                    </div>
+                  </aside>
+
+                  {/* Listings Grid */}
+                  <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="text-lg font-bold">Available Spaces</h2>
+                        <p className="text-sm text-slate-500">{filteredListings.length} space{filteredListings.length !== 1 ? 's' : ''} found</p>
+                      </div>
+                    </div>
+                    {filteredListings.length === 0 ? (
+                      <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+                        <span className="material-symbols-outlined text-3xl block mb-2">search_off</span>
+                        No spaces match your filters.
+                        <button onClick={resetBrowseFilters} className="block mx-auto mt-2 text-sm text-primary font-semibold hover:underline">Clear filters</button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        {filteredListings.map(listing => (
+                          <ListingCard key={listing.id} listing={listing} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
             </>
           )}
         </div>
@@ -242,12 +412,20 @@ export default function BrandDashboard() {
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 pt-2 pb-6 z-50">
         <div className="flex justify-around items-center h-14">
-          {NAV_ITEMS.map(({ icon, label, active }) => (
-            <a key={label} href="#" className={`flex flex-col items-center gap-1 ${active ? 'text-primary' : 'text-slate-400'}`}>
+          {NAV_ITEMS.map(({ id, icon, label }) => {
+            const active = id === activeSection;
+            return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => handleNavClick(id)}
+              className={`flex flex-col items-center gap-1 ${active ? 'text-primary' : 'text-slate-400'}`}
+            >
               <span className={`material-symbols-outlined ${active ? 'fill-1' : ''}`}>{icon}</span>
               <span className="text-[10px] font-medium">{label.split(' ')[0]}</span>
-            </a>
-          ))}
+            </button>
+            );
+          })}
         </div>
       </nav>
     </div>

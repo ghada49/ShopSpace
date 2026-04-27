@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 function getDynamicBadges(listing) {
   const badges = [];
@@ -9,17 +10,41 @@ function getDynamicBadges(listing) {
   return badges;
 }
 
+function getPriceUnitLabel(unit) {
+  return unit || 'day';
+}
+
 export default function ListingCard({ listing, recommended = false }) {
   const navigate = useNavigate();
   const {
     id, title, location, size, pricePerDay, price_per_day,
-    image, image_url, badge, tag, foot_traffic, matchScore, match_score, verified,
+    image, image_url, badge, foot_traffic, matchScore, match_score, verified, region,
   } = listing;
 
   const imgSrc = image_url || image || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400';
   const dailyPrice = price_per_day || pricePerDay;
   const score = match_score || matchScore;
   const dynamicBadges = getDynamicBadges(listing);
+  const priceUnit = getPriceUnitLabel(listing.price_unit);
+  const displaySize = listing.area_value ? `${listing.area_value} ${listing.area_unit || 'sq ft'}` : size;
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const savedListings = JSON.parse(localStorage.getItem('savedListings') || '[]');
+    setSaved(savedListings.includes(Number(id)));
+  }, [id]);
+
+  function toggleSaved(e) {
+    e.stopPropagation();
+    const listingId = Number(id);
+    const savedListings = JSON.parse(localStorage.getItem('savedListings') || '[]');
+    const nextSaved = savedListings.includes(listingId)
+      ? savedListings.filter(savedId => savedId !== listingId)
+      : [...savedListings, listingId];
+
+    localStorage.setItem('savedListings', JSON.stringify(nextSaved));
+    setSaved(nextSaved.includes(listingId));
+  }
 
   if (recommended) {
     return (
@@ -40,10 +65,10 @@ export default function ListingCard({ listing, recommended = false }) {
         {/* Favorite button */}
         <div className="absolute top-3 right-3 z-10">
           <button
-            onClick={e => e.stopPropagation()}
-            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 shadow-sm transition-colors"
+            onClick={toggleSaved}
+            className={`w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm transition-colors ${saved ? 'text-primary' : 'text-slate-400 hover:text-red-500'}`}
           >
-            <span className="material-symbols-outlined text-[18px]">favorite</span>
+            <span className={`material-symbols-outlined text-[18px] ${saved ? 'fill-1' : ''}`}>favorite</span>
           </button>
         </div>
 
@@ -63,12 +88,14 @@ export default function ListingCard({ listing, recommended = false }) {
             <h3 className="font-bold text-slate-900 truncate flex-1 mr-2">{title}</h3>
             <span className="text-primary font-black text-lg shrink-0">
               ${dailyPrice}
-              <span className="text-slate-400 text-[11px] font-normal">/day</span>
+              <span className="text-slate-400 text-[11px] font-normal">/{priceUnit}</span>
             </span>
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
             <span className="material-symbols-outlined text-[14px]">location_on</span>
-            {location}{size && ` · ${size}`}
+            {region && <span className="font-semibold text-primary">{region}</span>}
+            {region && location && <span className="text-slate-300">·</span>}
+            {location}{displaySize && ` · ${displaySize}`}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(verified === 1 || verified === true) && (
@@ -105,7 +132,7 @@ export default function ListingCard({ listing, recommended = false }) {
           <div className="absolute bottom-2 left-2">
             <span className="bg-black/70 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1 font-medium">
               <span className="material-symbols-outlined text-[12px]">group</span>
-              {foot_traffic}/day
+              {foot_traffic}/{listing.traffic_unit || 'day'}
             </span>
           </div>
         )}
@@ -126,12 +153,14 @@ export default function ListingCard({ listing, recommended = false }) {
           <h4 className="font-bold text-sm text-slate-900 truncate flex-1 mr-2">{title}</h4>
           <span className="text-primary font-bold text-sm shrink-0">
             ${dailyPrice}
-            <span className="text-[10px] text-slate-400 font-normal">/d</span>
+            <span className="text-[10px] text-slate-400 font-normal">/{priceUnit}</span>
           </span>
         </div>
         <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
           <span className="material-symbols-outlined text-[13px]">location_on</span>
-          {location}{size && ` · ${size}`}
+          {region && <span className="font-semibold text-primary">{region}</span>}
+          {region && location && <span className="text-slate-300">·</span>}
+          {location}{displaySize && ` · ${displaySize}`}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {(verified === 1 || verified === true) && (
@@ -154,3 +183,4 @@ export default function ListingCard({ listing, recommended = false }) {
     </div>
   );
 }
+

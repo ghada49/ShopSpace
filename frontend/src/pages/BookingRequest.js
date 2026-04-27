@@ -1,19 +1,53 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import BookingForm from '../components/BookingForm';
 import { listingsAPI, bookingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const MS_PER_DAY = 86400000;
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, days) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function isValidDateValue(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || '') && !Number.isNaN(new Date(value).getTime());
+}
+
+function getBillingUnits(days, priceUnit) {
+  if (priceUnit === 'week') return Math.ceil(days / 7);
+  if (priceUnit === 'month') return Math.ceil(days / 30);
+  return days;
+}
+
 export default function BookingRequest() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+  const today = formatDate(new Date());
+  const requestedStartDate = searchParams.get('startDate');
+  const initialStartDate = isValidDateValue(requestedStartDate) ? requestedStartDate : today;
+  const requestedEndDate = searchParams.get('endDate');
+  const initialEndDate = isValidDateValue(requestedEndDate) && new Date(requestedEndDate) > new Date(initialStartDate)
+    ? requestedEndDate
+    : formatDate(addDays(new Date(initialStartDate), 7));
+
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
 
   const { user } = useAuth();
 
@@ -50,9 +84,11 @@ export default function BookingRequest() {
   }
 
   // Compute price breakdown from listing
-  const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
+  const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / MS_PER_DAY));
   const dailyRate = listing?.price_per_day || 0;
-  const subtotal = dailyRate * days;
+  const priceUnit = listing?.price_unit || 'day';
+  const billingUnits = getBillingUnits(days, priceUnit);
+  const subtotal = dailyRate * billingUnits;
   const platformCommission = Math.round(subtotal * 0.10);
   const total = subtotal + platformCommission;
 
@@ -107,11 +143,11 @@ export default function BookingRequest() {
               <h3 className="text-lg font-bold mb-6">Price Breakdown</h3>
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Daily Rate (${dailyRate} x {days})</span>
+                  <span className="text-slate-500">Rate (${dailyRate} x {billingUnits} {priceUnit}{billingUnits !== 1 ? 's' : ''})</span>
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className = "flex justify-between items-center text-sm">
-                  <span className = "text-slate-500">ShopSpace commission (10%)</span>
+                  <span className = "text-slate-500">BaynSpace commission (10%)</span>
                   <span className = "font-medium">${platformCommission.toFixed(2)}</span>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
@@ -139,7 +175,7 @@ export default function BookingRequest() {
             <div className="bg-primary/5 rounded-xl p-4 flex items-start gap-3 border border-primary/10">
               <span className="material-symbols-outlined text-primary">verified_user</span>
               <div>
-                <p className="text-sm font-bold text-primary">ShopSpace Protection</p>
+                <p className="text-sm font-bold text-primary">BaynSpace Protection</p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   Every booking is insured for up to $1M in liability and includes 24/7 support.
                 </p>
@@ -169,12 +205,7 @@ export default function BookingRequest() {
             <span className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">store</span>
             </span>
-            <span className="font-bold tracking-tight">ShopSpace</span>
-          </div>
-          <div className="flex gap-6 text-xs font-medium text-slate-400">
-            {['Help Center', 'Cancellation Policy', 'Terms of Service'].map(item => (
-              <a key={item} className="hover:text-primary transition-colors" href="#">{item}</a>
-            ))}
+            <span className="font-bold tracking-tight">BaynSpace</span>
           </div>
         </div>
       </footer>

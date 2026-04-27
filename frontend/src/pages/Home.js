@@ -331,7 +331,7 @@ export default function Home() {
       <section className="border-y border-slate-200 bg-background-light py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <p className="mb-10 text-center text-xs font-bold uppercase tracking-widest text-slate-400">
-            Why Partners Trust ShopSpace
+            Why Partners Trust BaynSpace
           </p>
           <div className="grid gap-6 md:grid-cols-3">
             {TRUST.map(({ icon, title, desc }) => (
@@ -394,7 +394,7 @@ export default function Home() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
                   <span className="material-symbols-outlined text-white text-sm">storefront</span>
                 </div>
-                <span className="text-xl font-black tracking-tight">ShopSpace</span>
+                <span className="text-xl font-black tracking-tight">BaynSpace</span>
               </div>
               <p className="text-sm leading-relaxed max-w-xs">
                 The marketplace for retail partnerships and pop-up experiences across Lebanon.
@@ -411,7 +411,7 @@ export default function Home() {
               <h6 className="mb-4 font-bold text-white text-xs uppercase tracking-wider">Platform</h6>
               <ul className="space-y-3 text-sm">
                 {['How it Works', 'List your Space', 'Find a Brand', 'Success Stories'].map(item => (
-                  <li key={item}><a className="hover:text-primary transition-colors" href="#">{item}</a></li>
+                  <li key={item}><span>{item}</span></li>
                 ))}
               </ul>
             </div>
@@ -419,13 +419,13 @@ export default function Home() {
               <h6 className="mb-4 font-bold text-white text-xs uppercase tracking-wider">Company</h6>
               <ul className="space-y-3 text-sm">
                 {['About Us', 'Careers', 'Privacy Policy', 'Contact'].map(item => (
-                  <li key={item}><a className="hover:text-primary transition-colors" href="#">{item}</a></li>
+                  <li key={item}><span>{item}</span></li>
                 ))}
               </ul>
             </div>
           </div>
           <div className="border-t border-white/5 pt-8 text-center text-xs">
-            © 2024 ShopSpace Technologies Inc. All rights reserved.
+            © 2026 BaynSpace Technologies Inc. All rights reserved.
           </div>
         </div>
       </footer>
