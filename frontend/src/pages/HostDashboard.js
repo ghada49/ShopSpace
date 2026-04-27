@@ -31,7 +31,7 @@ const EMPTY_LISTING = {
   region: '',
   location_url: '',
   shop_url: '',
-  image_url: ''
+  image_url: '',
   foot_traffic: '',
   traffic_unit: 'day',
   exposure_score: '',
@@ -127,7 +127,7 @@ export default function HostDashboard() {
       location: listing.location || '',
       region: listing.region || '',
       location_url: listing.location_url || '',
-      shop_url: listing.shop_url || ''
+      shop_url: listing.shop_url || '',
       image_url: listing.image_url || '',
       foot_traffic: listing.foot_traffic || '',
       traffic_unit: listing.traffic_unit || 'day',
