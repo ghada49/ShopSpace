@@ -399,13 +399,6 @@ export default function Home() {
               <p className="text-sm leading-relaxed max-w-xs">
                 The marketplace for retail partnerships and pop-up experiences across Lebanon.
               </p>
-              <div className="flex gap-3 mt-6">
-                {['instagram', 'facebook', 'language'].map(icon => (
-                  <button key={icon} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 hover:bg-primary/20 transition-colors border border-white/10">
-                    <span className="material-symbols-outlined text-sm">{icon}</span>
-                  </button>
-                ))}
-              </div>
             </div>
             <div>
               <h6 className="mb-4 font-bold text-white text-xs uppercase tracking-wider">Platform</h6>
